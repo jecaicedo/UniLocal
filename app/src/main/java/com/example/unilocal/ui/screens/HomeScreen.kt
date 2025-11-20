@@ -1,25 +1,31 @@
+// C:/Users/CND1508MJM/Documents/Universidad/Apps Moviles/Final/UniLocal/app/src/main/java/com/example/unilocal/ui/screens/HomeScreen.kt
+
 package com.example.unilocal.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.unilocal.data.model.Lugar
 import com.example.unilocal.utils.HorarioUtils
 import com.example.unilocal.viewmodel.AuthViewModel
 import com.example.unilocal.viewmodel.LugarViewModel
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Surface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,16 +39,21 @@ fun HomeScreen(
     onNavigateToFavoritos: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
-    var showMenu by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoria by remember { mutableStateOf<String?>(null) }
-    var showCategoriaMenu by remember { mutableStateOf(false) }
 
     val lugares by lugarViewModel.lugares.collectAsState()
     val loading by lugarViewModel.loading.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
 
-    val categorias = listOf("Todas", "restaurante", "cafeteria", "museo", "hotel", "comida_rapida")
+    val categorias = listOf(
+        "Todos" to "🏠",
+        "restaurante" to "🍽️",
+        "cafeteria" to "☕",
+        "museo" to "🏛️",
+        "hotel" to "🏨",
+        "comida_rapida" to "🍔"
+    )
 
     LaunchedEffect(Unit) {
         lugarViewModel.cargarLugaresAprobados()
@@ -51,52 +62,83 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("UniLocal") },
+                title = {
+                    Column {
+                        Text(
+                            "Hola, ${currentUser?.nombre?.split(" ")?.firstOrNull() ?: "Usuario"}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Descubre lugares increíbles",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                // <-- INICIO DE LA MODIFICACIÓN -->
                 actions = {
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(Icons.Default.Menu, "Menú")
-                    }
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Perfil") },
-                            onClick = {
-                                showMenu = false
-                                onNavigateToPerfil()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Mis Lugares") },
-                            onClick = {
-                                showMenu = false
-                                onNavigateToMisLugares()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Favoritos") },
-                            onClick = {
-                                showMenu = false
-                                onNavigateToFavoritos()
-                            }
-                        )
-                        Divider()
-                        DropdownMenuItem(
-                            text = { Text("Cerrar Sesión") },
-                            onClick = {
-                                showMenu = false
-                                authViewModel.logout()
-                                onNavigateToLogin()
-                            }
+                    IconButton(onClick = {
+                        authViewModel.logout()
+                        onNavigateToLogin()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Cerrar sesión"
                         )
                     }
-                }
+                },
+                // <-- FIN DE LA MODIFICACIÓN -->
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToCrear) {
-                Icon(Icons.Default.Add, "Crear Lugar")
+        bottomBar = {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp
+            ) {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, "Inicio") },
+                    label = { Text("Inicio", fontSize = 11.sp) },
+                    selected = true,
+                    onClick = { }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Favorite, "Favoritos") },
+                    label = { Text("Favoritos", fontSize = 11.sp) },
+                    selected = false,
+                    onClick = { onNavigateToFavoritos() }
+                )
+                NavigationBarItem(
+                    icon = {
+                        Icon(
+                            Icons.Default.Add,
+                            "Crear",
+                            modifier = Modifier.size(28.dp)
+                        )
+                    },
+                    label = { Text("Crear", fontSize = 11.sp) },
+                    selected = false,
+                    onClick = { onNavigateToCrear() },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                        indicatorColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Place, "Mis Lugares") },
+                    label = { Text("Lugares", fontSize = 11.sp) },
+                    selected = false,
+                    onClick = { onNavigateToMisLugares() }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Person, "Perfil") },
+                    label = { Text("Perfil", fontSize = 11.sp) },
+                    selected = false,
+                    onClick = { onNavigateToPerfil() }
+                )
             }
         }
     ) { padding ->
@@ -105,60 +147,74 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Buscador mejorado
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shadowElevation = 4.dp
+            // Buscador
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(2.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            modifier = Modifier.weight(1f),
-                            placeholder = { Text("Buscar lugares...") },
-                            leadingIcon = { Icon(Icons.Default.Search, null) },
-                            singleLine = true,
-                            shape = MaterialTheme.shapes.medium
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        FilledTonalButton(onClick = { showCategoriaMenu = true }) {
-                            Icon(Icons.Default.List, "Filtrar", modifier = Modifier.size(20.dp))
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = {
+                        searchQuery = it
+                        if (it.isNotEmpty()) {
+                            lugarViewModel.buscarLugares(it, selectedCategoria)
+                        } else {
+                            lugarViewModel.cargarLugaresAprobados()
                         }
-
-                        DropdownMenu(
-                            expanded = showCategoriaMenu,
-                            onDismissRequest = { showCategoriaMenu = false }
-                        ) {
-                            categorias.forEach { categoria ->
-                                DropdownMenuItem(
-                                    text = { Text(categoria.replace("_", " ").capitalize()) },
-                                    onClick = {
-                                        selectedCategoria = if (categoria == "Todas") null else categoria
-                                        showCategoriaMenu = false
-                                        lugarViewModel.buscarLugares(searchQuery, selectedCategoria)
-                                    }
-                                )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Buscar lugares...") },
+                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = {
+                                searchQuery = ""
+                                lugarViewModel.cargarLugaresAprobados()
+                            }) {
+                                Icon(Icons.Default.Close, "Limpiar")
                             }
                         }
-                    }
+                    },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.surface
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
 
-                    if (selectedCategoria != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        AssistChip(
-                            onClick = {
-                                selectedCategoria = null
-                                lugarViewModel.cargarLugaresAprobados()
-                            },
-                            label = { Text(selectedCategoria!!.replace("_", " ").capitalize()) },
-                            leadingIcon = { Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp)) }
+            // Chips de categorías
+            LazyRow(
+                modifier = Modifier.padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp)
+            ) {
+                items(categorias) { (categoria, emoji) ->
+                    FilterChip(
+                        selected = if (categoria == "Todos") selectedCategoria == null else selectedCategoria == categoria,
+                        onClick = {
+                            selectedCategoria = if (categoria == "Todos") null else categoria
+                            lugarViewModel.buscarLugares(searchQuery, selectedCategoria)
+                        },
+                        label = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(emoji)
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    categoria.replace("_", " ").replaceFirstChar { it.uppercase() },
+                                    fontSize = 13.sp
+                                )
+                            }
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
                         )
-                    }
+                    )
                 }
             }
 
@@ -169,11 +225,30 @@ fun HomeScreen(
                 ) {
                     CircularProgressIndicator()
                 }
+            } else if (lugares.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.Search,
+                            null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            "No se encontraron lugares",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(lugares) { lugar ->
                         LugarCard(
@@ -196,39 +271,72 @@ fun LugarCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
-            if (lugar.imagenes.isNotEmpty()) {
-                Box {
+            Box {
+                if (lugar.imagenes.isNotEmpty()) {
                     AsyncImage(
                         model = lugar.imagenes.first(),
                         contentDescription = lugar.nombre,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp),
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
                         contentScale = ContentScale.Crop
                     )
-
-                    // Badge de estado
-                    Surface(
+                } else {
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(8.dp),
-                        color = if (HorarioUtils.estaAbierto(lugar.horarioApertura, lugar.horarioCierre))
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.error,
-                        shape = MaterialTheme.shapes.small
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = if (HorarioUtils.estaAbierto(lugar.horarioApertura, lugar.horarioCierre)) "Abierto" else "Cerrado",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimary
+                        Icon(
+                            Icons.Default.Place,
+                            null,
+                            modifier = Modifier.size(80.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(12.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = lugar.categoria.replace("_", " ").replaceFirstChar { it.uppercase() },
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                val abierto = HorarioUtils.estaAbierto(lugar.horarioApertura, lugar.horarioCierre)
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp),
+                    color = if (abierto)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.error,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = if (abierto) "Abierto" else "Cerrado",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
@@ -236,24 +344,11 @@ fun LugarCard(
                 Text(
                     text = lugar.nombre,
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = lugar.categoria.replace("_", " ").capitalize(),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = lugar.descripcion,
@@ -265,9 +360,9 @@ fun LugarCard(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -282,15 +377,20 @@ fun LugarCard(
                                 String.format("%.1f", lugar.calificacionPromedio)
                             else "Sin calificar",
                             style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
-                    Text(
-                        text = "${lugar.horarioApertura} - ${lugar.horarioCierre}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🕒", fontSize = 16.sp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${lugar.horarioApertura} - ${lugar.horarioCierre}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

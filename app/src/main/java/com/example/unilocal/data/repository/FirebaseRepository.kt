@@ -192,22 +192,35 @@ class FirebaseRepository {
             )
             docRef.set(nuevoComentario).await()
 
-            // Actualizar calificación promedio
+            // Forzar actualización inmediata
             actualizarCalificacionPromedio(comentario.lugarId)
+
+            // Log para verificar
+            println("✅ Comentario guardado: ${docRef.id}")
+
             Result.success(Unit)
         } catch (e: Exception) {
+            println("❌ Error al guardar comentario: ${e.message}")
             Result.failure(e)
         }
     }
 
     suspend fun getComentariosPorLugar(lugarId: String): List<Comentario> {
         return try {
-            firestore.collection("comentarios")
+            println("🔍 Buscando comentarios para lugar: $lugarId")
+
+            val comentarios = firestore.collection("comentarios")
                 .whereEqualTo("lugarId", lugarId)
-                .orderBy("fecha", Query.Direction.DESCENDING)
                 .get().await()
-                .documents.mapNotNull { it.toObject(Comentario::class.java)?.copy(id = it.id) }
+                .documents.mapNotNull { doc ->
+                    println("📄 Documento encontrado: ${doc.id}")
+                    doc.toObject(Comentario::class.java)?.copy(id = doc.id)
+                }
+
+            println("✅ Total comentarios encontrados: ${comentarios.size}")
+            comentarios.sortedByDescending { it.fecha?.seconds ?: 0 }
         } catch (e: Exception) {
+            println("❌ Error al obtener comentarios: ${e.message}")
             emptyList()
         }
     }

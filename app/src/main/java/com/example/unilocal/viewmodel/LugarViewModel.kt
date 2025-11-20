@@ -4,8 +4,8 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.unilocal.data.model.Comentario
-import com.example.unilocal.data.repository.FirebaseRepository
 import com.example.unilocal.data.model.Lugar
+import com.example.unilocal.data.repository.FirebaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -134,8 +134,10 @@ class LugarViewModel : ViewModel() {
 
             val result = repository.agregarComentario(comentario)
             if (result.isSuccess) {
-                // Recargar comentarios y lugares
-                kotlinx.coroutines.delay(500) // Pequeña espera para que Firebase procese
+                // Esperar y recargar múltiples veces para asegurar que se vean
+                kotlinx.coroutines.delay(1000)
+                cargarComentarios(lugar.id)
+                kotlinx.coroutines.delay(500)
                 cargarComentarios(lugar.id)
                 cargarLugaresAprobados()
             }
